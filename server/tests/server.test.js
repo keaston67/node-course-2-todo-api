@@ -6,12 +6,23 @@
 const {app} = require('./../server');
 const {Todo} = require('./../models/todo');
 
+// dummy todos for testing
+const todos = [{
+    text: 'First test todo'},
+    {
+    text: 'Second test todo'
+    
+}];
+
 // add function to clear Todo database before each test
 beforeEach((done) => {
-    Todo.remove({}).then(() => done());
+    Todo.remove({}).then(() => {
+    return Todo.insertMany(todos); 
+    }).then(() => done());    
 });
 
-//  describe block with test cases
+
+//  describe block with test cases for POST /todos
 describe('POST /todos', () => {
     it('should create a new todo', (done) => {
         var text = 'Test todo text';
@@ -33,7 +44,7 @@ describe('POST /todos', () => {
                 return done(err);
             }
             // make request to database to verify test todo was added
-            Todo.find().then((todos) => {
+            Todo.find({text}).then((todos) => {
             expect(todos.length).toBe(1);
             expect(todos[0].text).toBe(text);
             done();
@@ -41,7 +52,7 @@ describe('POST /todos', () => {
         }).catch((e) => done(e));
         });
      });
-//   test case to check todo not created with bad data
+    //  test case to check todo not created with bad data
     it('should not create a new todo with invalid body data', (done) => {
     // var text = 'Test invalid todo text';
     request(app)
@@ -57,7 +68,7 @@ describe('POST /todos', () => {
         }
         // make request to database to verify test todo was not added
         Todo.find().then((todos) => {
-        expect(todos.length).toBe(0);
+        expect(todos.length).toBe(2);
         done();
         // catch block for any errors occuring inside callback 
     }).catch((e) => done(e));
@@ -66,6 +77,17 @@ describe('POST /todos', () => {
     
  });
 
-
-
-
+//  describe block with test cases for GET /todos
+describe('GET /todos', () => {
+    it('should get all todos', (done) => {
+        request(app)
+        .get('/todos')
+        // assertions
+        .expect(200)
+        .expect((res) => {
+            expect(res.body.todos.length).toBe(2);
+        })
+        //  no need to provide a function to end as above as no asynch here
+        .end(done)  
+    });
+});
