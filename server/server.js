@@ -1,6 +1,8 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 
+// require ObjectID to access utility methods
+const {ObjectID} = require('mongodb');
 // Require the mongoose file/variable using ES6 destructuring
 var {mongoose} = require('./db/mongoose');
 
@@ -41,7 +43,27 @@ app.get('/todos', (req, res) => {
     });
 });
 
-
+//  GET /todos/123456
+app.get('/todos/:id', (req, res) => {
+//  res.send(req.params);
+ var id = req.params.id;
+//  Validate id using {ObjectID} utility method
+if (!ObjectID.isValid(id)) {
+   return res.status(404).send();
+ };
+//  find by ID
+Todo.findById(id).then((todo) => { 
+    // no todo
+    if(!todo) {
+        return res.status(404).send();
+        }
+    // Success
+        res.send({todo})
+    // catch error
+    }).catch((e) => {
+    res.status(400).send();
+        });
+});
 
 app.listen(3000, () => {
     console.log('started on port 3000');
