@@ -10,6 +10,7 @@ var {Todo} = require('./models/todo');
 var {User} = require('./models/user'); 
 
 var app = express();
+const port = process.env.PORT || 3000;
 
 // register (body-parser) middleware - can now send JSON to
 // our express application
@@ -65,8 +66,8 @@ Todo.findById(id).then((todo) => {
         });
 });
 
-app.listen(3000, () => {
-    console.log('started on port 3000');
+app.listen(port, () => {
+    console.log(`started up at port ${port}');
 });
   
 module.exports = {app};
