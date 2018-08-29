@@ -67,7 +67,7 @@ Todo.findById(id).then((todo) => {
 });
 
 app.listen(port, () => {
-    console.log(`started up at port ${port}');
+    console.log(`started up at port ${port}`);
 });
   
 module.exports = {app};
