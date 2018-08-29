@@ -66,6 +66,28 @@ Todo.findById(id).then((todo) => {
         });
 });
 
+app.delete('/todos/:id', (req, res) => {
+    var id = req.params.id;
+    //  Validate id using {ObjectID} utility method
+if (!ObjectID.isValid(id)) {
+    return res.status(404).send();
+  };
+//   remove todo by Id
+Todo.findByIdAndRemove(id).then((todo) => {
+    //   if no doc, send 404
+if(!todo) {
+    return res.status(404).send();
+    }
+    // Success, return doc and 200
+    res.send(todo);
+// error send 400 and empty body
+}).catch((e) => {
+    res.status(400).send();
+    });
+});
+
+
+
 app.listen(port, () => {
     console.log(`started up at port ${port}`);
 });
