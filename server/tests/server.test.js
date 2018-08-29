@@ -2,14 +2,19 @@
  const expect = require('expect');
  const request = require('supertest');
 
+// require ObjectID to access utility methods and object id from database for tests
+const {ObjectID} = require('mongodb');
+
 //  Reference local files to test
 const {app} = require('./../server');
 const {Todo} = require('./../models/todo');
 
 // dummy todos for testing
 const todos = [{
+    _id: new ObjectID,
     text: 'First test todo'},
     {
+     _id: new ObjectID,
     text: 'Second test todo'
     
 }];
@@ -89,5 +94,44 @@ describe('GET /todos', () => {
         })
         //  no need to provide a function to end as above as no asynch here
         .end(done)  
+    });
+});
+
+//  describe block with test cases for GET /todos/:id will need to pull in id property
+describe('GET /todos/:id', () => {
+    it('should return todo doc', (done) => {
+        request(app)
+        // use template string to inject object id
+        .get(`/todos/${todos[0]._id.toHexString()}`)
+        // assertions
+        .expect(200)
+        // custom expect call/assertion block
+        .expect((res) => {
+            expect(res.body.todo.text).toBe(todos[0].text);
+        })
+        .end(done);
+    });
+    it('should return 404 if todo doc not found', (done) => {
+        // create a new id string using new ObjectID
+        var hexId = new ObjectID().toHexString();
+        // console.log('hexId: ', hexId);
+        request(app)
+        // use template string to inject object id
+        // .get(`/todos/${new ObjectID().toHexString()}`)
+        .get(`/todos/${hexId}`)
+        // assertions
+        .expect(404)
+        .end(done);
+    });
+    it('should return 404 for non-object ids', (done) => {
+        // my test variables 
+        // var testId = todos[0]._id;
+        var testId = '123abc'
+        request(app)
+        // use template string to inject object id
+        .get(`/todos/${testId}`)
+        // assertions
+        .expect(404)
+        .end(done);
     });
 });
