@@ -15,7 +15,9 @@ const todos = [{
     text: 'First test todo'},
     {
      _id: new ObjectID,
-    text: 'Second test todo'   
+    text: 'Second test todo',
+    completed: true,
+    completeAt:  333
 }];
 
 // add function to clear Todo database before each test
@@ -91,7 +93,7 @@ describe('GET /todos', () => {
             expect(res.body.todos.length).toBe(2);
         })
         //  no need to provide a function to end as above as no asynch here
-        .end(done)  
+        .end(done)    
     });
 });
 
@@ -188,3 +190,41 @@ describe('DELETE /todos/:id', () => {
         .end(done);
     });
  });
+
+ //  describe block with test cases for patch 
+describe('PATCH /todos/:id', () => {
+    it('should update the todo', (done) => {
+        var hexId = todos[0]._id.toHexString();
+        var text = 'Test todo update text';
+        var completed = true;
+        request(app)
+        // use template string to inject object id
+        .patch(`/todos/${hexId}`)
+        .send({text, completed})
+        .expect(200)
+        // custom expect call/assertion block
+        .expect((res) => {
+            expect(res.body.todo.text).toBe(text);
+            expect(res.body.todo.completed).toBe(true);
+            expect(res.body.todo.completedAt).toBeA('number');
+        })
+        .end(done);
+    });
+    it('should clear completed at when todo is not completed', (done) => {
+        var hexId = todos[1]._id.toHexString();
+        var text = 'Test todo update text!!';
+        var completed = false;
+        request(app)
+        // use template string to inject object id
+        .patch(`/todos/${hexId}`)
+        .send({text, completed})
+        .expect(200)
+        // custom expect call/assertion block
+        .expect((res) => {
+            expect(res.body.todo.text).toBe(text);
+            expect(res.body.todo.completed).toBe(false);
+            expect(res.body.todo.completedAt).toBe(null);
+        })
+        .end(done);
+    });
+});
