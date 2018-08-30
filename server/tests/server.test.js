@@ -25,7 +25,6 @@ beforeEach((done) => {
     }).then(() => done());    
 });
 
-
 //  describe block with test cases for POST /todos
 describe('POST /todos', () => {
     it('should create a new todo', (done) => {
