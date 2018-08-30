@@ -15,8 +15,7 @@ const todos = [{
     text: 'First test todo'},
     {
      _id: new ObjectID,
-    text: 'Second test todo'
-    
+    text: 'Second test todo'   
 }];
 
 // add function to clear Todo database before each test
@@ -82,7 +81,7 @@ describe('POST /todos', () => {
     
  });
 
-//  describe block with test cases for GET /todos
+//  describe block with test cases for GET /todos 
 describe('GET /todos', () => {
     it('should get all todos', (done) => {
         request(app)
@@ -111,6 +110,7 @@ describe('GET /todos/:id', () => {
         })
         .end(done);
     });
+
     it('should return 404 if todo doc not found', (done) => {
         // create a new id string using new ObjectID
         var hexId = new ObjectID().toHexString();
@@ -123,15 +123,69 @@ describe('GET /todos/:id', () => {
         .expect(404)
         .end(done);
     });
+
+    it('should return 404 for non-object ids', (done) => {
+        // my test variables 
+        // var testId = todos[0]._id;
+        //var testId = '123abc'
+        request(app)
+        // use template string to inject object id
+        .get('/todos/123abc')
+        // assertions
+        .expect(404)
+        .end(done);
+    });
+});
+
+
+//  describe block with test cases for delete 
+describe('DELETE /todos/:id', () => {
+    it('should remove a todo doc', (done) => {
+        var hexId = todos[1]._id.toHexString();
+
+        request(app)
+        // make a http request to delete the todo
+        .delete(`/todos/${hexId}`)
+        // assertions
+        .expect(200)
+        // custom expect call/assertion block
+        .expect((res) => {
+            expect(res.body.todo._id).toBe(hexId);
+        })
+        .end((err, res) => {
+            if (err) {
+            // pass to done using return to end execution 
+                return done(err);
+            }
+        Todo.findById(hexId).then((todo) => {
+            expect(todo).toNotExist();
+            //  end test
+            done();
+            //  catch block
+             }).catch((e) => done(e));
+        });
+    });
+    it('should return 404 if todo doc not found', (done) => {
+        // create a new id string using new ObjectID
+        var hexId = new ObjectID().toHexString();
+        // console.log('hexId: ', hexId);
+        request(app)
+        // use template string to inject object id
+        // .get(`/todos/${new ObjectID().toHexString()}`)
+        .delete(`/todos/${hexId}`)
+        // assertions
+        .expect(404)
+        .end(done);
+    });
     it('should return 404 for non-object ids', (done) => {
         // my test variables 
         // var testId = todos[0]._id;
         var testId = '123abc'
         request(app)
         // use template string to inject object id
-        .get(`/todos/${testId}`)
+        .delete(`/todos/${testId}`)
         // assertions
         .expect(404)
         .end(done);
     });
-});
+ });

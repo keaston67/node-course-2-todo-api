@@ -79,7 +79,7 @@ if(!todo) {
     return res.status(404).send();
     }
     // Success, return doc and 200
-    res.send(todo);
+    res.send({todo});
 // error send 400 and empty body
 }).catch((e) => {
     res.status(400).send();
