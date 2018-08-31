@@ -58,6 +58,7 @@ app.get('/todos/:id', (req, res) => {
 if (!ObjectID.isValid(id)) {
    return res.status(404).send();
  }
+
 //  find by ID
 Todo.findById(id).then((todo) => { 
     // no todo
@@ -72,6 +73,7 @@ Todo.findById(id).then((todo) => {
     res.status(400).send();
         });
     });    
+
 // delete a todo:
 app.delete('/todos/:id', (req, res) => {
     var id = req.params.id;
@@ -97,7 +99,7 @@ if(!todo) {
 // update a todo:
 app.patch('/todos/:id', (req, res) => {
     var id = req.params.id;
-    // create a body variable with subset of only things we wnat user able to update 
+    // create a body variable with subset of only things we want user able to update 
     var body = _.pick(req.body, ['text','completed']);
     // console.log('req body: ', body );
     //  Validate id using {ObjectID} utility method
@@ -123,6 +125,29 @@ app.patch('/todos/:id', (req, res) => {
       }).catch((e) => {
          res.status(400).send(); 
       })
+});
+
+
+//  POST /users
+app.post('/users', (req, res) => {
+// use lodash method to pick out only the fields want from user input
+var body = _.pick(req.body, ['email','password']);
+var user = new User(body
+//     {
+//     email: body.email,
+//     password: body.password
+// }
+);
+// save to mongoDB using mongoose save method
+user.save().then(()  => {
+    // console.log('new user created');
+// return chaining promise call
+    return user.generateAuthToken();     
+}).then((token) => {
+    res.header('x-auth', token).send(user);
+}).catch((e) => {
+res.status(400).send(e);
+    })
 });
 
 
