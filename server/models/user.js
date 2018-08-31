@@ -58,6 +58,33 @@ UserSchema.methods.generateAuthToken =  function () {
     });
 };
 
+// model method using statics not methods to create model method
+// use standard function as want to bind to this
+UserSchema.statics.findByToken = function (token) {
+    // model methods get called with the 
+var User = this;
+var decoded;
+
+try {
+    decoded = jwt.verify(token, 'abc123');
+
+} catch (e) {  
+    // return new Promise((resolve, reject) => {
+    //     reject();
+    // });
+    // simplified error promise, could pas in value e.g. .reject('test'); that 
+    // will return as (e) argument in server.js
+    return Promise.reject();
+}
+//  success case - returns a promise so return it to be able to chain
+return User.findOne({
+    '_id': decoded._id,
+    // to query nested object wrap in quotes, no auth or id var so wrap in quotes
+    'tokens.token': token,
+    'tokens.access': 'auth'
+    });
+};
+
 var User = mongoose.model('User', UserSchema);
 
 // need to export the model as an object so is available
