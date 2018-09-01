@@ -1,19 +1,38 @@
 const {SHA256} = require('crypto-js');
 // JWT Library
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
-var data = {
-    id: 10
-};
+// ------ bcrypt playground ------
+ var password = '123abc';
 
-var token = jwt.sign(data, '123abc');
-console.log(token);
-// JWT utility functions:
-jwt.sign
-jwt.verify
+bcrypt.genSalt(10, (err, salt) => {
+    bcrypt.hash(password, salt, (err,hash) => {
+        console.log(hash);
+    });
+});
 
-var decoded = jwt.verify(token, '123abcc');
-console.log(decoded);
+// check if hash = plain text password someone enters when log in
+// var hashedPassword = '$2a$10$4r5duqsb4dwDCPPxILnfd.ua7uwde1yssapTjM9VSh6C1v4GXeoHu'
+
+// bcrypt.compare(password, hashedPassword, (err, res) => {
+//     console.log(res);
+// });
+
+
+// ------ JWT Playground ----
+// var data = {
+//     id: 10
+// };
+
+// var token = jwt.sign(data, '123abc');
+// console.log(token);
+// // JWT utility functions:
+// jwt.sign
+// jwt.verify
+
+// var decoded = jwt.verify(token, '123abcc');
+// console.log(decoded);
 
 // var message =  'I am user number 3';
 // // SHA256 method returns an object - we convert to string with .toString

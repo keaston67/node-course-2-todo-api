@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
+const bcrypt = require('bcryptjs');
 
 var UserSchema = new mongoose.Schema({
     email: {
@@ -84,6 +85,25 @@ return User.findOne({
     'tokens.access': 'auth'
     });
 };
+
+// mongoose middleware function for password hashing
+UserSchema.pre('save', function (next) {
+    var user = this;
+    //  method runs on save so need to check user instance
+    //  using isModified to make sure we don't re-hash a hashed password
+    if(user.isModified('password')) {
+          // bcrypt methods here
+            bcrypt.genSalt(10, (err, salt) => {
+                bcrypt.hash(user.password, salt, (err,hash) => {
+                    user.password = hash;
+                    next();
+                });
+            });
+    } else {
+    next();
+    }
+});
+
 
 var User = mongoose.model('User', UserSchema);
 
