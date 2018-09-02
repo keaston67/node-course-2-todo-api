@@ -13,11 +13,11 @@ bcrypt.genSalt(10, (err, salt) => {
 });
 
 // check if hash = plain text password someone enters when log in
-// var hashedPassword = '$2a$10$4r5duqsb4dwDCPPxILnfd.ua7uwde1yssapTjM9VSh6C1v4GXeoHu'
+var hashedPassword = '$2a$10$4r5duqsb4dwDCPPxILnfd.ua7uwde1yssapTjM9VSh6C1v4GXeoHu'
 
-// bcrypt.compare(password, hashedPassword, (err, res) => {
-//     console.log(res);
-// });
+bcrypt.compare(password, hashedPassword, (err, res) => {
+    console.log(res);
+});
 
 
 // ------ JWT Playground ----
