@@ -8,24 +8,12 @@ const {ObjectID} = require('mongodb');
 //  Reference local files to test
 const {app} = require('./../server');
 const {Todo} = require('./../models/todo');
-
-// dummy todos for testing
-const todos = [{
-    _id: new ObjectID,
-    text: 'First test todo'},
-    {
-     _id: new ObjectID,
-    text: 'Second test todo',
-    completed: true,
-    completeAt:  333
-}];
+const {User} = require('./../models/user');
+const {todos, populateTodos, users, populateUsers} = require('./seed/seed');
 
 // add function to clear Todo database before each test
-beforeEach((done) => {
-    Todo.remove({}).then(() => {
-    return Todo.insertMany(todos); 
-    }).then(() => done());    
-});
+beforeEach(populateUsers);
+beforeEach(populateTodos);
 
 //  describe block with test cases for POST /todos
 describe('POST /todos', () => {
@@ -225,6 +213,84 @@ describe('PATCH /todos/:id', () => {
             expect(res.body.todo.completed).toBe(false);
             expect(res.body.todo.completedAt).toBe(null);
         })
+        .end(done);
+    });
+});
+
+//  describe block with test cases for GET users/me private route
+describe('GET /users/me', () => {
+it('should return user if authenticated', (done) => {
+    request(app)
+    // get request
+    .get('/users/me')
+    // set a header
+    .set('x-auth',users[0].tokens[0].token)
+    .expect(200)
+    // custom expect call/assertion block
+    .expect((res) => {
+    expect(res.body._id).toBe(users[0]._id.toHexString())
+    expect(res.body.email).toBe(users[0].email)
+        }).end(done);
+});
+it('should return 401 if not authenticated', (done) => {
+    request(app)
+    // get request
+    .get('/users/me')
+    // don't set a header
+    .expect(401)
+    // custom expect call/assertion block
+    .expect((res) => {
+    expect(res.body).toEqual({});
+    }).end(done);
+    });
+});
+
+//  describe block with test cases for POST users/ private route
+describe('POST /users', () => {
+    it('should create a user', (done) => {
+        var email = 'alfieeaston@example.com';
+        var password = 'woofwoof';
+        request(app)
+        .post('/users')
+        .send({email, password})
+        .expect(200)
+        // custom expect call/assertion block
+        .expect((res) => {
+        expect(res.headers['x-auth']).toExist();
+        expect(res.body._id).toExist();
+        expect(res.body.email).toBe(email);
+        }).end((err) => {
+            // if error return error
+           if (err) {
+               return done(err);
+           } 
+           // find user in the database and check test password has been hashed
+           User.findOne({email}).then((user) => {
+               expect(user).toExist();
+               expect(user.password).toNotBe(password);
+               done();
+           });
+        });
+       
+    });
+    it('should return validation errors if request invalid', (done) => {
+        var email = 'cocoeaston@example.com';
+        var password = 'woohoo';
+        request(app)
+        .post('/users')
+        .send({email, password})
+        .expect(400)
+        .end(done);
+    });
+    it('should not create a user if email in use', (done) => {
+        var email = 'coconuteaston@example.com';
+        var password = 'woohoo';
+        request(app)
+        .post('/users')
+        // .send({email, password})
+        // Andrews logic
+        .send({email: users[0].email, password})
+        .expect(400)
         .end(done);
     });
 });
