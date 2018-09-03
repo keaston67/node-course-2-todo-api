@@ -22,7 +22,9 @@ describe('POST /todos', () => {
 
         request(app)
         .post('/todos')
+        .set('x-auth',users[0].tokens[0].token)
         .send({text})
+    
         // assertions
         .expect(200)
         // custom expect assertion block about response 
@@ -50,6 +52,7 @@ describe('POST /todos', () => {
     // var text = 'Test invalid todo text';
     request(app)
     .post('/todos')
+    .set('x-auth',users[0].tokens[0].token)
     .send({})
     // assertions
     .expect(400) 
@@ -75,10 +78,11 @@ describe('GET /todos', () => {
     it('should get all todos', (done) => {
         request(app)
         .get('/todos')
+        .set('x-auth',users[0].tokens[0].token)
         // assertions
         .expect(200)
         .expect((res) => {
-            expect(res.body.todos.length).toBe(2);
+            expect(res.body.todos.length).toBe(1);
         })
         //  no need to provide a function to end as above as no asynch here
         .end(done)    
@@ -91,12 +95,22 @@ describe('GET /todos/:id', () => {
         request(app)
         // use template string to inject object id
         .get(`/todos/${todos[0]._id.toHexString()}`)
+        .set('x-auth',users[0].tokens[0].token)
         // assertions
         .expect(200)
         // custom expect call/assertion block
         .expect((res) => {
             expect(res.body.todo.text).toBe(todos[0].text);
         })
+        .end(done);
+    });
+    it('should not return a todo doc created by other user', (done) => {
+        request(app)
+        // use template string to inject object id
+        .get(`/todos/${todos[1]._id.toHexString()}`)
+        .set('x-auth',users[0].tokens[0].token)
+        // assertions
+        .expect(404)
         .end(done);
     });
 
@@ -108,6 +122,7 @@ describe('GET /todos/:id', () => {
         // use template string to inject object id
         // .get(`/todos/${new ObjectID().toHexString()}`)
         .get(`/todos/${hexId}`)
+        .set('x-auth',users[0].tokens[0].token)
         // assertions
         .expect(404)
         .end(done);
@@ -120,6 +135,7 @@ describe('GET /todos/:id', () => {
         request(app)
         // use template string to inject object id
         .get('/todos/123abc')
+        .set('x-auth',users[0].tokens[0].token)
         // assertions
         .expect(404)
         .end(done);
@@ -135,6 +151,7 @@ describe('DELETE /todos/:id', () => {
         request(app)
         // make a http request to delete the todo
         .delete(`/todos/${hexId}`)
+        .set('x-auth',users[1].tokens[0].token)
         // assertions
         .expect(200)
         // custom expect call/assertion block
@@ -154,6 +171,31 @@ describe('DELETE /todos/:id', () => {
              }).catch((e) => done(e));
         });
     });
+
+    it('should not remove a todo doc user does not own', (done) => {
+        var hexId = todos[0]._id.toHexString();
+
+        request(app)
+        // make a http request to delete the todo
+        .delete(`/todos/${hexId}`)
+        .set('x-auth',users[1].tokens[0].token)
+        // assertions
+        .expect(404)
+        .end((err, res) => {
+            if (err) {
+            // pass to done using return to end execution 
+                return done(err);
+            }
+        Todo.findById(hexId).then((todo) => {
+            expect(todo).toExist();
+            //  end test
+            done();
+            //  catch block
+             }).catch((e) => done(e));
+        });
+    });
+
+
     it('should return 404 if todo doc not found', (done) => {
         // create a new id string using new ObjectID
         var hexId = new ObjectID().toHexString();
@@ -162,6 +204,7 @@ describe('DELETE /todos/:id', () => {
         // use template string to inject object id
         // .get(`/todos/${new ObjectID().toHexString()}`)
         .delete(`/todos/${hexId}`)
+        .set('x-auth',users[1].tokens[0].token)
         // assertions
         .expect(404)
         .end(done);
@@ -173,6 +216,7 @@ describe('DELETE /todos/:id', () => {
         request(app)
         // use template string to inject object id
         .delete(`/todos/${testId}`)
+        .set('x-auth',users[1].tokens[0].token)
         // assertions
         .expect(404)
         .end(done);
@@ -188,6 +232,7 @@ describe('PATCH /todos/:id', () => {
         request(app)
         // use template string to inject object id
         .patch(`/todos/${hexId}`)
+        .set('x-auth',users[0].tokens[0].token)
         .send({text, completed})
         .expect(200)
         // custom expect call/assertion block
@@ -198,6 +243,20 @@ describe('PATCH /todos/:id', () => {
         })
         .end(done);
     });
+
+    it('should not update the todo created by other user', (done) => {
+        var hexId = todos[0]._id.toHexString();
+        var text = 'Test todo update text';
+        var completed = true;
+        request(app)
+        // use template string to inject object id
+        .patch(`/todos/${hexId}`)
+        .set('x-auth',users[1].tokens[0].token)
+        .send({text, completed})
+        .expect(404)
+        .end(done);
+    });
+
     it('should clear completed at when todo is not completed', (done) => {
         var hexId = todos[1]._id.toHexString();
         var text = 'Test todo update text!!';
@@ -205,6 +264,7 @@ describe('PATCH /todos/:id', () => {
         request(app)
         // use template string to inject object id
         .patch(`/todos/${hexId}`)
+        .set('x-auth',users[1].tokens[0].token)
         .send({text, completed})
         .expect(200)
         // custom expect call/assertion block
@@ -301,8 +361,8 @@ describe('POST /users/login', () => {
     request(app)
     .post('/users/login')
     .send({
-        email: users[0].email, 
-        password: users[0].password
+        email: users[1].email, 
+        password: users[1].password
     })
     .expect(200)
      // custom expect call/assertion block
@@ -315,7 +375,7 @@ describe('POST /users/login', () => {
              return done(err);
          }
     // find user in the database and check 
-         User.findById(users[0]._id).then((user) => {
+         User.findById(users[1]._id).then((user) => {
             expect(user.tokens[1]).toInclude({
                 access: 'auth',
                 token: res.headers['x-auth']
@@ -342,11 +402,37 @@ describe('POST /users/login', () => {
              if(err){
                  return done(err);
              }
-        // find user in the database and check 
+        // find user in the database and check token count
              User.findById(users[1]._id).then((user) => {
-                expect(user.tokens.length).toBe(0);
+                expect(user.tokens.length).toBe(1);
                 done();
              }).catch((e) => done(e));
          });   
      });
+});
+
+//  describe block with test cases for POST users/login private route
+describe('DELETE /users/me/token', () => {
+    it('should remove auth token on logout', (done) => {
+        request(app)
+        .delete('/users/me/token')
+        // set a header
+        .set('x-auth',users[0].tokens[0].token)
+        .expect(200)
+         // custom expect call/assertion block
+         .expect((res) => {
+            expect(res.headers['x-auth']).toNotExist();
+        })
+        // custom asynch function
+         .end((err, res) => {
+             if(err){
+                 return done(err);
+             }
+        // find user in the database and check 
+             User.findById(users[0]._id).then((user) => {
+                expect(user.tokens.length).toBe(0);
+                done();
+            }).catch((e) => done(e));
+        });   
+    });
 });
